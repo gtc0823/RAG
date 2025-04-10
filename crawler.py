@@ -21,17 +21,15 @@ driver = webdriver.Chrome(options=chrome_options)
 
 def clean_text(text):
     lines = text.split('\n')
-    author, date = 'N/A', 'N/A'
+    author = 'N/A'
 
     for line in lines:
         if line.startswith('作者'):
             author = line.replace('作者', '').strip()
-        elif line.startswith('時間'):
-            date = line.replace('時間', '').strip()
 
     # 去除 meta 資訊（前 4 行）和簽名檔（-- 之後）
     content_body = re.split(r'--\n', '\n'.join(lines[4:]))[0]
-    return author, date, content_body.strip()
+    return author, content_body.strip()
 
 def get_articles_from_page():
     articles = []
@@ -64,13 +62,12 @@ def get_articles_from_page():
             # 取得時間、內文
             try:
                 main_content = driver.find_element(By.ID, 'main-content').text
-                author, date, content = clean_text(main_content)
+                author, content = clean_text(main_content)
 
                 articles.append({
                     "title": title,
                     "url": link,
                     "author": author,
-                    "date": date,
                     "popularity": nrec,
                     "content": content
                 })
@@ -127,7 +124,6 @@ with open("CFantasy_articles.txt", "w", encoding="utf-8") as f:
     for article in result:
         f.write("📌 Title: " + article.get("title", "N/A") + "\n")
         f.write("Author: " + article.get("author", "N/A") + "\n")
-        f.write("Date: " + article.get("date", "N/A") + "\n")
         f.write("Popularity: " + str(article.get("popularity", "N/A")) + "\n")
         f.write("URL: " + article.get("url", "N/A") + "\n\n")
         f.write("Content:\n" + article.get("content", "").strip() + "\n")
