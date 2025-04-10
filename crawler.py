@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 import time
 import re
 import json
+import pandas as pd
 
 # 設定無頭模式
 chrome_options = Options()
@@ -100,11 +101,25 @@ def crawl_cfantasy(pages):
     return all_articles
 
 # 執行爬蟲
-result = crawl_cfantasy(pages=50)  # 爬取 2 頁
+result = crawl_cfantasy(pages=2)  # 爬取 2 頁
 
-# 存成 JSON
+'''# 存成 JSON
 with open("CFantasy_articles.json", "w", encoding="utf-8") as f:
     json.dump(result, f, ensure_ascii=False, indent=2)
+'''
+
+df = pd.DataFrame(result)
+
+df.to_csv("CFantasy_articles.txt", sep=",", index=False, encoding="utf-8")
+
+with open("CFantasy_articles.txt", "w", encoding="utf-8") as f:
+    for article in result:
+        f.write(f"Title: {article.get('title', 'N/A')}\n")
+        f.write(f"Author: {article.get('author', 'N/A')}\n")
+        f.write(f"Date: {article.get('date', 'N/A')}\n")
+        f.write("Content:\n")
+        f.write(f"{article.get('content', '').strip()}\n")
+        f.write("\n" + "-" * 40 + "\n\n")
 
 driver.quit()
 print("✅ 爬取完成！共收集文章數量：", len(result))
