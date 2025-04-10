@@ -109,7 +109,7 @@ def crawl_cfantasy(pages):
     return all_articles
 
 # 執行爬蟲
-result = crawl_cfantasy(pages=2)  # 爬取 2 頁
+result = crawl_cfantasy(pages=50)  # 爬取 50r 頁
 
 '''# 存成 JSON
 with open("CFantasy_articles.json", "w", encoding="utf-8") as f:
