@@ -20,9 +20,18 @@ chrome_options.add_argument(f"user-agent={user_agent}")
 driver = webdriver.Chrome(options=chrome_options)
 
 def clean_text(text):
-    # 去除簽名檔和多餘空白
-    text = re.sub(r'(--\n).*', '', text, flags=re.DOTALL)
-    return text.strip()
+    lines = text.split('\n')
+    author, date = 'N/A', 'N/A'
+
+    for line in lines:
+        if line.startswith('作者'):
+            author = line.replace('作者', '').strip()
+        elif line.startswith('時間'):
+            date = line.replace('時間', '').strip()
+
+    # 去除 meta 資訊（前 4 行）和簽名檔（-- 之後）
+    content_body = re.split(r'--\n', '\n'.join(lines[4:]))[0]
+    return author, date, content_body.strip()
 
 def get_articles_from_page():
     articles = []
@@ -55,11 +64,13 @@ def get_articles_from_page():
             # 取得時間、內文
             try:
                 main_content = driver.find_element(By.ID, 'main-content').text
+                author, date, content = clean_text(main_content)
 
-                content = clean_text(main_content)
                 articles.append({
                     "title": title,
                     "url": link,
+                    "author": author,
+                    "date": date,
                     "popularity": nrec,
                     "content": content
                 })
@@ -114,12 +125,14 @@ df.to_csv("CFantasy_articles.txt", sep=",", index=False, encoding="utf-8")
 
 with open("CFantasy_articles.txt", "w", encoding="utf-8") as f:
     for article in result:
-        f.write(f"Title: {article.get('title', 'N/A')}\n")
-        f.write(f"Author: {article.get('author', 'N/A')}\n")
-        f.write(f"Date: {article.get('date', 'N/A')}\n")
-        f.write("Content:\n")
-        f.write(f"{article.get('content', '').strip()}\n")
-        f.write("\n" + "-" * 40 + "\n\n")
+        f.write("📌 Title: " + article.get("title", "N/A") + "\n")
+        f.write("Author: " + article.get("author", "N/A") + "\n")
+        f.write("Date: " + article.get("date", "N/A") + "\n")
+        f.write("Popularity: " + str(article.get("popularity", "N/A")) + "\n")
+        f.write("URL: " + article.get("url", "N/A") + "\n\n")
+        f.write("Content:\n" + article.get("content", "").strip() + "\n")
+        f.write("\n" + "—" * 50 + "\n\n")
+
 
 driver.quit()
 print("✅ 爬取完成！共收集文章數量：", len(result))
